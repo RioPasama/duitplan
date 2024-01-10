@@ -1,0 +1,194 @@
+CREATE TABLE Users (
+    UserID INT PRIMARY KEY AUTO_INCREMENT,
+    UserName VARCHAR(255) UNIQUE NOT NULL,
+    Email VARCHAR(255) UNIQUE NOT NULL,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY idx_email (Email)
+);
+
+CREATE TABLE Auth (
+    AuthID INT PRIMARY KEY AUTO_INCREMENT,
+    UserID INT,
+    AuthProvider VARCHAR(20) NOT NULL,
+    AuthIDProvider VARCHAR(100) UNIQUE,
+    PasswordHash VARCHAR(255),
+    ActivedAuthBiometric BOOLEAN DEFAULT FALSE,
+    AuthBiometric VARCHAR(255),
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+);
+
+CREATE TABLE Currencies (
+    CurrencyID INT PRIMARY KEY AUTO_INCREMENT,
+    CurrencyCode VARCHAR(5) NOT NULL,
+    CurrencyName VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Categories (
+    CategoryID INT PRIMARY KEY AUTO_INCREMENT,
+    ParentCategoryID INT,
+    CategoryName JSON NOT NULL, -- Menggunakan tipe JSON untuk menyimpan data dalam format JSON
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (ParentCategoryID) REFERENCES Categories(CategoryID)
+);
+
+CREATE TABLE Expenses (
+    ExpenseID INT PRIMARY KEY AUTO_INCREMENT,
+    UserID INT,
+    Amount DECIMAL(10, 2) NOT NULL,
+    Description TEXT,
+    CategoryID INT,
+    ExpenseDate DATE,
+    CurrencyID INT,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID),
+    FOREIGN KEY (CurrencyID) REFERENCES Currencies(CurrencyID),
+    KEY idx_user_expense (UserID),
+    KEY idx_category (CategoryID),
+    KEY idx_currency (CurrencyID),
+    INDEX idx_expense_date (ExpenseDate)
+);
+
+CREATE TABLE UserDataCollection (
+    DataCollectionID INT PRIMARY KEY AUTO_INCREMENT,
+    UserID INT,
+    CurrencyCode VARCHAR(5) NOT NULL,
+    LanguageCode VARCHAR(5) NOT NULL,
+    UIDartMode BOOLEAN DEFAULT FALSE,
+    Categories JSON, -- Menggunakan tipe JSON untuk menyimpan data dalam format JSON
+    FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    INDEX idx_user_data_collection (UserID),
+    INDEX idx_collection_date (CollectionDate) -- Anda belum mendefinisikan kolom CollectionDate, pastikan sesuai dengan kebutuhan
+);
+
+
+------------------------------------------------------------------------------------------------
+
+// Collection: users
+{
+  "_id": ObjectId("user_id_1"),
+  "userName": "JohnDoe",
+  "email": "john@example.com",
+  "createdAt": ISODate("2023-01-01T12:00:00Z"),
+  "updatedAt": ISODate("2023-01-01T12:00:00Z")
+}
+
+// Collection: auth
+{
+  "_id": ObjectId("auth_id_1"),
+  "userID": ObjectId("user_id_1"),
+  "authProvider": "email",
+  "authIDProvider": "john@example.com",
+  "passwordHash": "hashed_password",
+  "activedAuthBiometric": false,
+  "authBiometric": "biometric_data",
+  "createdAt": ISODate("2023-01-01T12:00:00Z"),
+  "updatedAt": ISODate("2023-01-01T12:00:00Z")
+}
+
+// Collection: currencies
+{
+  "_id": ObjectId("currency_id_1"),
+  "currencyCode": "USD",
+  "currencyName": "US Dollar"
+}
+
+// Collection: categories
+{
+  "_id": ObjectId("category_id_1"),
+  "parentCategoryID": ObjectId("parent_category_id_1"),
+  "categoryName": {
+    "English": "Category 1",
+    "Spanish": "Categoría 1",
+    "French": "Catégorie 1"
+  },
+  "createdAt": ISODate("2023-01-01T12:00:00Z"),
+  "updatedAt": ISODate("2023-01-01T12:00:00Z")
+}
+
+// Collection: expenses
+{
+  "_id": ObjectId("expense_id_1"),
+  "userID": ObjectId("user_id_1"),
+  "amount": 100.50,
+  "description": "Expense description",
+  "categoryID": ObjectId("category_id_1"),
+  "expenseDate": ISODate("2023-01-01"),
+  "currencyID": ObjectId("currency_id_1"),
+  "createdAt": ISODate("2023-01-01T12:00:00Z"),
+  "updatedAt": ISODate("2023-01-01T12:00:00Z")
+}
+
+// Collection: userDataCollection
+{
+  "_id": ObjectId("data_collection_id_1"),
+  "userID": ObjectId("user_id_1"),
+  "currencyCode": "USD",
+  "languageCode": "en",
+  "uiDartMode": false,
+  "categories": [
+    {
+      "id": "001",
+      "parentCategoryID": "0011",
+      "categoryName": "Category Name",
+      "createdAt": ISODate("2023-01-01T12:00:00Z"),
+      "updatedAt": ISODate("2023-01-01T12:00:00Z")
+    }
+    // Add more categories as needed
+  ],
+  "createdAt": ISODate("2023-01-01T12:00:00Z"),
+  "updatedAt": ISODate("2023-01-01T12:00:00Z")
+}
+
+
+------------------------------------------------------------------------------------------------
+
+# Users
+HSET user:user_id_1 userName "JohnDoe"
+HSET user:user_id_1 email "john@example.com"
+HSET user:user_id_1 createdAt "2023-01-01T12:00:00Z"
+HSET user:user_id_1 updatedAt "2023-01-01T12:00:00Z"
+
+# Auth
+HSET auth:auth_id_1 userID user_id_1
+HSET auth:auth_id_1 authProvider "email"
+HSET auth:auth_id_1 authIDProvider "john@example.com"
+HSET auth:auth_id_1 passwordHash "hashed_password"
+HSET auth:auth_id_1 activedAuthBiometric "false"
+HSET auth:auth_id_1 authBiometric "biometric_data"
+HSET auth:auth_id_1 createdAt "2023-01-01T12:00:00Z"
+HSET auth:auth_id_1 updatedAt "2023-01-01T12:00:00Z"
+
+# Currencies
+HSET currency:currency_id_1 currencyCode "USD"
+HSET currency:currency_id_1 currencyName "US Dollar"
+
+# Categories
+HSET category:category_id_1 parentCategoryID parent_category_id_1
+HSET category:category_id_1 categoryName_english "Category 1"
+HSET category:category_id_1 categoryName_spanish "Categoría 1"
+HSET category:category_id_1 categoryName_french "Catégorie 1"
+HSET category:category_id_1 createdAt "2023-01-01T12:00:00Z"
+HSET category:category_id_1 updatedAt "2023-01-01T12:00:00Z"
+
+# Expenses
+HSET expense:expense_id_1 userID user_id_1
+HSET expense:expense_id_1 amount "100.50"
+HSET expense:expense_id_1 description "Expense description"
+HSET expense:expense_id_1 categoryID category_id_1
+HSET expense:expense_id_1 expenseDate "2023-01-01"
+HSET expense:expense_id_1 currencyID currency_id_1
+HSET expense:expense_id_1 createdAt "2023-01-01T12:00:00Z"
+HSET expense:expense_id_1 updatedAt "2023-01-01T12:00:00Z"
+
+# UserDataCollection
+HSET data_collection:data_collection_id_1 userID user_id_1
+HSET data_collection:data_collection_id_1 currencyCode "USD"
+HSET data_collection:data_collection_id_1 languageCode "en"
+HSET data_collection:data_collection_id_1 uiDartMode "false"
+HSET data_collection:data_collection_id_1 categories "[{'id': '001', 'parentCategoryID': '0011', 'categoryName': 'Category Name', 'createdAt': '2023-01-01T12:00:00Z', 'updatedAt': '2023-01-01T12:00:00Z'}]"
